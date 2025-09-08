@@ -7,7 +7,7 @@ library(stringr)
 
 # (1) Load datasets
 kor_ticker <- read.csv('kor_ticker.csv', fileEncoding = "CP949")
-names(kor_ticker) <- c('name', 'end_price', 'compare', 'fluctuation rate', 'code', 'EPS', 'pre_PER', 'pre_EPS', 'PER', , 'BPS', 'PBR', 'dividend', 'dividend_rate', 'market', 'industry', 'company_price')
+names(kor_ticker) <- c('name', 'end_price', 'compare', 'fluctuation rate', 'code', 'EPS', 'pre_PER', 'pre_EPS', 'PER',  'BPS', 'PBR', 'dividend', 'dividend_rate', 'market', 'industry', 'company_price')
 kor_value <- read.csv('kor_value_indicator.csv', row.names = 1, stringsAsFactors = F) 
 
 # Standardize stock codes to 6 digits and sort
@@ -16,7 +16,7 @@ kor_value <- kor_value %>%
   arrange(code)
 
 # (2) Select KOSPI200 stocks and calculate market-cap weights
-kospi_200 = kor_ticker[kor_ticker$industry == 'KOSPI', ] %>% 
+kospi_200 = kor_ticker[kor_ticker$market== 'KOSPI', ] %>% 
   slice(1:200) %>% 
   mutate(company_price_rate = company_price / sum(company_price))
 
