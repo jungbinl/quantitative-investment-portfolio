@@ -1,7 +1,3 @@
-library(quantmod)             # Data import (getSymbols, Ad)
-library(PerformanceAnalytics) # Return calculation, portfolio returns, charts
-library(magrittr)             # Pipe operator %>% 
-library(timeSeries)           # lag() for turnover calculation
 
 # ===============================
 # 📈 Tactical Allocation Strategy with SMA (Simple Moving Average)
