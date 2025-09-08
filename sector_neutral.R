@@ -35,7 +35,7 @@ ret = Return.calculate(kor_price) %>% xts::last(252)
 ret_12m <- ret %>% sapply(., function(x){ prod(1 + x) - 1 })
 
 # Select top 30 stocks by 12-month momentum
-invest_12mom <- order(ret_12m, decreasing = TRUE)[1:30]
+invest_12mom <- order(ret_12m, decreasing = TRUE)[1:500]
 
 ##############################################
 # 3. Sector Exposure of Momentum Portfolio
@@ -61,11 +61,7 @@ ggplot(a, aes(x = reorder(industry, Freq), y = Freq, label = Freq)) +
 ##############################################
 
 # Remove suspended/delisted stocks from the ticker dataset
-kor_sector <- kor_sector %>% filter(!is.na(code) & !(code %in% c("048830", "096870", "290650")))
-
-# Align ticker codes with price dataset
-colnames(kor_price) = substring(colnames(kor_price), 2)
-setdiff(kor_sector$code, colnames(kor_price))  # Check mismatches
+kor_sector <- kor_sector[kor_sector$code %in% intersect(kor_sector$code, str_sub(names(ret_12m), 2, 7))&(!is.na(kor_sector$code)), ]
 
 ##############################################
 # 5. Sector-Neutral Momentum Portfolio
@@ -92,3 +88,4 @@ kor_ticker[invest_mom_neutral, ] %>%
   geom_text(color = 'black', size = 4, hjust = -0.3) +
   xlab(NULL) + ylab(NULL) +
   coord_flip()
+
