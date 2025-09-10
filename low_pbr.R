@@ -8,6 +8,7 @@ kor_value <- kor_value %>% filter(pbr >= 0 & per >=0 & pcr >= 0 & psr >=0)
 
 # Load ticker dataset (company names and codes)
 kor_ticker <- read.csv('kor_ticker.csv', fileEncoding = 'CP949')
+names(kor_ticker) <- c('name', 'end_price', 'compare', 'fluctuation rate', 'code', 'EPS', 'pre_PER', 'pre_EPS', 'PER',  'BPS', 'PBR', 'dividend', 'dividend_rate', 'market', 'industry', 'company_price')
 
 # --------------------------------------------
 # Step 1: Identify Low PBR (Price-to-Book Ratio) Stocks
@@ -19,8 +20,8 @@ invest_pbr = rank(kor_value$pbr) <= 30
 low_pbr <- merge(
   kor_value[invest_pbr, ],
   kor_ticker,
-  by.x = 'code', by.y = '종목코드'
-) %>% select('code', '종목명', 'pbr')
+  by.x = 'code', by.y = 'code'
+) %>% select('code', 'name', 'pbr')
 
 # --------------------------------------------
 # Step 2: Create ranking for each valuation metric
@@ -55,10 +56,10 @@ top_index <- order(rank_sum$rank_sum, decreasing = F)[1 :30]
 merge_indicator <- merge(
   kor_value[top_index, ],
   kor_ticker,
-  by.x = 'code', by.y = '종목코드'
-) %>% select('code', '종목명', 'pbr', 'pcr', 'psr', 'per')
+  by.x = 'code', by.y = 'code'
+) %>% select('code', 'name', 'pbr', 'pcr', 'psr', 'per')
 
 # --------------------------------------------
 # Step 5: Compare overlap between Low-PBR strategy and Composite Ranking strategy
 # --------------------------------------------
-intersect(merge_indicator$종목명, low_pbr$종목명)
+intersect(merge_indicator$name, low_pbr$name)
