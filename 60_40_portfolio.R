@@ -1,7 +1,3 @@
-# ===============================
-# 📊 Quant Portfolio Strategies in R
-# ===============================
-
 # --- Libraries ---
 library(quantmod)            # Get financial data (e.g., Yahoo Finance)
 library(PerformanceAnalytics) # Performance and risk analysis
@@ -50,52 +46,44 @@ turnover = xts(rowSums(abs(portfolio$BOP.Weight - timeSeries::lag(portfolio$EOP.
 # Plot turnover over time
 chart.TimeSeries(turnover)
 
+# ===============================
+# portfolio_results
+# ===============================
+portfolio_results <- data.frame(
+  trade_date = index(portfolio$returns),
+  portfolio_return = as.numeric(portfolio$returns),
+  cumulative_return = cumprod(1 + as.numeric(portfolio$returns)) - 1,
+  turnover = as.numeric(turnover)
+)
+
+write.csv(portfolio_results, "60_40_portfolio_results.csv", row.names = FALSE)
 
 # ===============================
-# ⏱️ Tactical Allocation Strategy (SMA Rule)
+# portfolio_stocks
 # ===============================
+stocks_info <- data.frame(
+  trade_date = index(rets),
+  SPY_return = rets[, 1],
+  TLT_return = rets[, 2],
+  SPY_BOP_weight = portfolio$BOP.Weight[, 1],
+  TLT_BOP_weight = portfolio$BOP.Weight[, 2],
+  SPY_EOP_weight = portfolio$EOP.Weight[, 1],
+  TLT_EOP_weight = portfolio$EOP.Weight[, 2]
+)
 
-symbol = c('SPY', 'SHY')      # SPY = US Stocks, SHY = US Short-term Treasuries
-getSymbols(symbol, src = 'yahoo')
+write.csv(stocks_info, "60_40_portfolio_stocks.csv", row.names = FALSE)
 
-# Adjusted close prices
-prices = do.call(cbind, lapply(symbol, function(x) Ad(get(x))))
-rets = Return.calculate(prices) %>% na.omit()
+# ===============================
+# asset_prices
+# ===============================
+prices <- prices[2:nrow(prices), ]
 
-# Monthly endpoints
-ep = endpoints(rets, on = 'months')
+prices_df <- data.frame(
+  trade_date = index(prices),
+  SPY_adj_close = as.numeric(prices[, 1]),
+  TLT_adj_close = as.numeric(prices[, 2]),
+  SPY_return = rets[, 1],
+  TLT_return = rets[, 2]
+)
 
-wts = list()
-lookback = 10                  # Lookback period = 10 months
-
-# Loop through each rebalancing date starting after lookback window
-for(i in (lookback + 1) : length(ep)) {
-  sub_price = prices[ep[i-lookback] : ep[i], 1]   # SPY price history for last 10 months
-  sma = mean(sub_price)                           # Calculate SMA (Simple Moving Average)
-  
-  wt = rep(0,2)                                   # Initialize weights
-  wt[1] = ifelse(last(sub_price) > sma, 1, 0)     # If SPY > SMA → invest 100% in SPY
-  wt[2] = 1 - wt[1]                               # Else invest 100% in SHY
-  
-  # Store weights at current rebalancing point
-  wts[[i]] = xts(t(wt), order.by = index(rets[ep[i]]))
-}
-
-# Combine weight history into xts
-wts = do.call(rbind, wts)
-
-# Build tactical allocation portfolio
-Tactical = Return.portfolio(rets, wts, verbose = T)
-
-# Compare Buy & Hold (SPY) vs Tactical Strategy
-portfolio = na.omit(cbind(rets[,1], Tactical$returns)) %>% setNames(c('Buy & Hold', 'Tactical Strategy'))
-
-# Performance comparison
-charts.PerformanceSummary(portfolio, main = "Buy & Hold VS Tactical")
-
-# Turnover for tactical strategy
-turnover = xts(rowSums(abs(Tactical$BOP.Weight - timeSeries::lag(Tactical$EOP.Weight)), na.rm = T), 
-               order.by = index(Tactical$BOP.Weight))
-
-# Plot turnover
-chart.TimeSeries(turnover)
+write.csv(prices_df, "60_40_asset_prices.csv", row.names = FALSE)
