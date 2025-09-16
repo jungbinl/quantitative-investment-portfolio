@@ -23,23 +23,26 @@ prices = do.call(cbind, lapply(symbol, function(x) Ad(get(x))))
 rets = Return.calculate(prices) %>% na.omit()
 
 # Monthly endpoints
-ep = endpoints(rets, on = 'months')
 
 wts = list()
-lookback = 10                  # Lookback period = 10 months
+lookback = 10
 
-# Loop through each rebalancing date starting after lookback window
-for(i in (lookback + 1) : length(ep)) {
-  sub_price = prices[ep[i-lookback] : ep[i], 1]   # SPY price history for last 10 months
-  sma = mean(sub_price)                           # Calculate SMA (Simple Moving Average)
+ep = endpoints(rets, on = 'months')
+
+for(i in (lookback + 1):length(ep)) {
+  start_idx <- max(ep[i - lookback] + 1, 1)
+  end_idx   <- ep[i]
   
-  wt = rep(0,2)                                   # Initialize weights
-  wt[1] = ifelse(last(sub_price) > sma, 1, 0)     # If SPY > SMA → invest 100% in SPY
-  wt[2] = 1 - wt[1]                               # Else invest 100% in SHY
+  sub_price <- prices[start_idx:end_idx, 1]
+  sma <- mean(as.numeric(sub_price), na.rm = TRUE)
   
-  # Store weights at current rebalancing point
-  wts[[i]] = xts(t(wt), order.by = index(rets[ep[i]]))
+  wt <- rep(0, 2)
+  wt[1] <- ifelse(as.numeric(last(sub_price)) > sma, 1, 0)
+  wt[2] <- 1 - wt[1]
+  
+  wts[[i]] <- xts(t(wt), order.by = index(rets[end_idx]))
 }
+
 
 # Combine weight history into xts
 wts = do.call(rbind, wts)
@@ -84,7 +87,7 @@ stocks_info <- data.frame(
   SPY_BOP_weight = Tactical$BOP.Weight[ ,1], 
   SHY_BOP_weight = Tactical$BOP.Weight[ ,2],
   SPY_EOP_weight = Tactical$EOP.Weight[ ,1], 
-  SHY_EOP_weight = Tactical$EOP.Weight[ ,2])
+  SHY_EOP_weight = Tactical$EOP.Weight[ ,2]
 )
 
 write.csv(stocks_info, "tactical_sma_portfolio_stocks.csv", row.names = FALSE)
